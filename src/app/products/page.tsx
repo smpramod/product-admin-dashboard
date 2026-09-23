@@ -9,15 +9,20 @@ import { ProductCards } from "@/components/products/ProductCards";
 import { Pagination } from "@/components/products/Pagination";
 import { ProductTableSkeleton } from "@/components/products/ProductSkeleton";
 import { ProductFilters, SORT_OPTIONS } from "@/components/products/ProductFilters";
+import { ProductModal } from "@/components/products/ProductModal";
+import { DeleteConfirmModal } from "@/components/products/DeleteConfirmModal";
 import productService from "@/services/productService";
 import categoryService from "@/services/categoryService";
+import mockStore from "@/lib/mockStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Product, CategoryItem } from "@/types";
+import { Product, CategoryItem, CreateProductInput } from "@/types";
 import { 
   Package, 
   RefreshCw, 
   AlertCircle, 
-  SearchX
+  SearchX,
+  Plus,
+  CheckCircle2
 } from "lucide-react";
 
 function ProductsDashboardContent() {
@@ -40,13 +45,12 @@ function ProductsDashboardContent() {
   const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : 10;
   const pageSize = [10, 20, 50].includes(parsedLimit) ? parsedLimit : 10;
 
-  // Determine active sort value string for the dropdown
   const getSortDropdownValue = () => {
     if (!urlSortBy) return "default";
     return `${urlSortBy}-${urlOrder}`;
   };
 
-  // 2. Component State
+  // 2. State
   const [searchInput, setSearchInput] = useState(urlSearch);
   const debouncedSearch = useDebounce(searchInput, 400);
 
@@ -56,8 +60,13 @@ function ProductsDashboardContent() {
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // AbortController ref to prevent search race conditions
+  // Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 3. Helper to update URL query parameters cleanly
@@ -80,31 +89,28 @@ function ProductsDashboardContent() {
     [searchParams, pathname, router]
   );
 
-  // 4. Sync searchInput when URL query changes externally (e.g. back/forward navigation)
+  // 4. Sync searchInput when URL changes externally
   useEffect(() => {
     setSearchInput(urlSearch);
   }, [urlSearch]);
 
   // 5. Update URL when debounced search term changes
   useEffect(() => {
-    // Only update if debounced value is different from current URL param
     if (debouncedSearch !== urlSearch) {
       updateUrlParams({
         search: debouncedSearch.trim() ? debouncedSearch.trim() : null,
-        page: 1, // Reset to page 1 on search change
+        page: 1,
       });
     }
   }, [debouncedSearch, urlSearch, updateUrlParams]);
 
-  // 6. Fetch Categories on Mount
+  // 6. Fetch Categories
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
       try {
         const catList = await categoryService.getCategories();
-        if (isMounted) {
-          setCategories(catList);
-        }
+        if (isMounted) setCategories(catList);
       } catch (err) {
         console.error("Failed to load categories:", err);
       } finally {
@@ -117,9 +123,16 @@ function ProductsDashboardContent() {
     };
   }, []);
 
-  // 7. Main Data Fetching with AbortController & Conflict Resolution
+  // Show auto-dismiss toast
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  // 7. Main Data Fetching with Local Mock Overlay
   const fetchProducts = useCallback(async () => {
-    // Cancel any previous in-flight request to eliminate race conditions
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -133,33 +146,29 @@ function ProductsDashboardContent() {
     const skip = (currentPage - 1) * pageSize;
 
     try {
-      let data;
+      let rawProducts: Product[] = [];
+      let calculatedTotal = 0;
 
-      // Strategy: Handle combinations of search, category, and sorting
       if (urlSearch && urlCategory) {
-        // Hybrid Strategy: DummyJSON cannot combine /search?q= and /category/ on one endpoint.
-        // Fetch search results and apply category filtering client-side for consistent UX.
+        // Hybrid: Broad search + Category filter
         const searchResult = await productService.searchProducts({
           query: urlSearch,
-          limit: 100, // get broad search matches to filter by category
+          limit: 100,
           sortBy: urlSortBy || undefined,
           order: urlOrder,
           signal: controller.signal,
         });
 
-        const filtered = searchResult.products.filter(
+        // Apply local overlay & filter
+        const overlayed = mockStore.applyOverlayToList(searchResult.products);
+        const filtered = overlayed.filter(
           (p) => p.category.toLowerCase() === urlCategory.toLowerCase()
         );
 
-        data = {
-          products: filtered.slice(skip, skip + pageSize),
-          total: filtered.length,
-          skip,
-          limit: pageSize,
-        };
+        rawProducts = filtered.slice(skip, skip + pageSize);
+        calculatedTotal = filtered.length;
       } else if (urlSearch) {
-        // Search API endpoint
-        data = await productService.searchProducts({
+        const searchResult = await productService.searchProducts({
           query: urlSearch,
           limit: pageSize,
           skip,
@@ -167,35 +176,40 @@ function ProductsDashboardContent() {
           order: urlOrder,
           signal: controller.signal,
         });
+
+        rawProducts = mockStore.applyOverlayToList(searchResult.products);
+        calculatedTotal = searchResult.total;
       } else if (urlCategory) {
-        // Category API endpoint
-        data = await productService.getProductsByCategory({
+        const categoryResult = await productService.getProductsByCategory({
           category: urlCategory,
           limit: pageSize,
           skip,
           sortBy: urlSortBy || undefined,
           order: urlOrder,
         });
+
+        rawProducts = mockStore.applyOverlayToList(categoryResult.products);
+        calculatedTotal = categoryResult.total;
       } else {
-        // Standard paginated products list
-        data = await productService.getProducts({
+        const baseResult = await productService.getProducts({
           limit: pageSize,
           skip,
           sortBy: urlSortBy || undefined,
           order: urlOrder,
         });
+
+        rawProducts = mockStore.applyOverlayToList(baseResult.products);
+        calculatedTotal = baseResult.total + mockStore.getAddedProducts().length - mockStore.getDeletedProductIds().length;
       }
 
-      setProducts(data.products || []);
-      setTotal(data.total || 0);
+      setProducts(rawProducts);
+      setTotal(Math.max(0, calculatedTotal));
 
-      // Safe page clamping
-      const maxPage = Math.max(1, Math.ceil((data.total || 0) / pageSize));
-      if (currentPage > maxPage && data.total > 0) {
+      const maxPage = Math.max(1, Math.ceil(calculatedTotal / pageSize));
+      if (currentPage > maxPage && calculatedTotal > 0) {
         updateUrlParams({ page: maxPage });
       }
     } catch (err: unknown) {
-      // Ignore AbortController cancellations
       if (err instanceof Error && (err.name === "CanceledError" || err.message === "Request was cancelled.")) {
         return;
       }
@@ -209,61 +223,77 @@ function ProductsDashboardContent() {
 
   useEffect(() => {
     fetchProducts();
-
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort();
     };
   }, [fetchProducts]);
 
-  // 8. Event Handlers
-  const handleSearchChange = (value: string) => {
-    setSearchInput(value);
+  // 8. CRUD Handlers with Mock Store Overlay
+  const handleAddProduct = async (formData: CreateProductInput) => {
+    // 1. Call API to get dummy response structure
+    const apiResult = await productService.addProduct(formData);
+    // 2. Persist in Local Mock Store
+    const saved = mockStore.saveAddedProduct({ ...formData, id: apiResult.id || Date.now() });
+    
+    showToast(`Product "${saved.title}" created successfully! (Mock saved)`);
+    fetchProducts();
   };
 
-  const handleCategoryChange = (category: string) => {
-    updateUrlParams({
-      category: category || null,
-      page: 1, // Reset to page 1 on category change
-    });
+  const handleEditProduct = async (formData: CreateProductInput) => {
+    if (!editingProduct) return;
+    // 1. Call API
+    await productService.updateProduct(editingProduct.id, formData);
+    // 2. Persist override in Local Mock Store
+    mockStore.saveEditedProduct(editingProduct.id, formData);
+
+    showToast(`Product "${formData.title}" updated successfully!`);
+    setEditingProduct(null);
+    fetchProducts();
   };
 
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    // 1. Call API
+    await productService.deleteProduct(deletingProduct.id);
+    // 2. Save in Local Mock Store deleted list
+    mockStore.saveDeletedProductId(deletingProduct.id);
+
+    showToast(`Product "${deletingProduct.title}" deleted.`);
+    setDeletingProduct(null);
+    fetchProducts();
+  };
+
+  // Filter and pagination handlers
+  const handleSearchChange = (val: string) => setSearchInput(val);
+  const handleCategoryChange = (cat: string) => updateUrlParams({ category: cat || null, page: 1 });
   const handleSortChange = (sortValue: string) => {
     const selected = SORT_OPTIONS.find((s) => s.value === sortValue);
     if (!selected || selected.value === "default") {
-      updateUrlParams({
-        sortBy: null,
-        order: null,
-        page: 1,
-      });
+      updateUrlParams({ sortBy: null, order: null, page: 1 });
     } else {
-      updateUrlParams({
-        sortBy: selected.sortBy || null,
-        order: selected.order || null,
-        page: 1,
-      });
+      updateUrlParams({ sortBy: selected.sortBy || null, order: selected.order || null, page: 1 });
     }
   };
-
   const handleResetFilters = () => {
     setSearchInput("");
-    router.push(pathname); // Reset all query parameters
+    router.push(pathname);
   };
-
-  const handlePageChange = (newPage: number) => {
-    updateUrlParams({ page: newPage });
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    updateUrlParams({ limit: newSize, page: 1 });
-  };
+  const handlePageChange = (newPage: number) => updateUrlParams({ page: newPage });
+  const handlePageSizeChange = (newSize: number) => updateUrlParams({ limit: newSize, page: 1 });
 
   const isFiltered = Boolean(urlSearch || urlCategory || (urlSortBy && getSortDropdownValue() !== "default"));
 
   return (
     <div className="space-y-6">
       
+      {/* Toast Notification Alert */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-2xl bg-slate-900 text-white px-4 py-3 shadow-2xl animate-slide-down text-xs font-medium border border-slate-700">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Dashboard Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
@@ -280,7 +310,18 @@ function ProductsDashboardContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          {/* Add Product Button */}
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 active:scale-95 transition"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Product</span>
+          </button>
+
+          {/* Refresh Button */}
           <button
             type="button"
             onClick={fetchProducts}
@@ -358,10 +399,18 @@ function ProductsDashboardContent() {
       ) : (
         <div className="space-y-4">
           {/* Desktop Table View */}
-          <ProductTable products={products} />
+          <ProductTable 
+            products={products} 
+            onEdit={(p) => setEditingProduct(p)}
+            onDelete={(p) => setDeletingProduct(p)}
+          />
 
           {/* Mobile Cards View */}
-          <ProductCards products={products} />
+          <ProductCards 
+            products={products} 
+            onEdit={(p) => setEditingProduct(p)}
+            onDelete={(p) => setDeletingProduct(p)}
+          />
 
           {/* Custom Pagination Bar */}
           <div className="glass-card rounded-2xl p-2 sm:p-4 border border-slate-200">
@@ -376,6 +425,31 @@ function ProductsDashboardContent() {
           </div>
         </div>
       )}
+
+      {/* Add Product Modal */}
+      <ProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddProduct}
+        categories={categories}
+      />
+
+      {/* Edit Product Modal */}
+      <ProductModal
+        isOpen={Boolean(editingProduct)}
+        onClose={() => setEditingProduct(null)}
+        onSubmit={handleEditProduct}
+        product={editingProduct}
+        categories={categories}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={handleDeleteProduct}
+        product={deletingProduct}
+      />
 
     </div>
   );

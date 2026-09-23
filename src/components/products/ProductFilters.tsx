@@ -7,7 +7,6 @@ import {
   Filter, 
   ArrowUpDown, 
   RotateCcw,
-  Sparkles,
   Tag
 } from "lucide-react";
 import { CategoryItem } from "@/types";
@@ -54,7 +53,7 @@ export function ProductFilters({
   isFiltered,
 }: ProductFiltersProps) {
   return (
-    <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3.5 border border-slate-200 shadow-card">
+    <div className="glass-card rounded-2xl p-4 sm:p-5 space-y-3.5 border border-slate-200 shadow-card bg-white/90">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
         
         {/* Search Input (md:col-span-5) */}
@@ -67,13 +66,13 @@ export function ProductFilters({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by title, brand, keyword..."
-            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-2xs focus:border-indigo-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-hidden transition"
+              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-none transition"
               title="Clear search query"
             >
               <X className="h-4 w-4" />
@@ -91,7 +90,7 @@ export function ProductFilters({
             onChange={(e) => onCategoryChange(e.target.value)}
             disabled={categoriesLoading}
             aria-label="Filter by Category"
-            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-8 py-2.5 text-sm font-medium text-slate-700 shadow-2xs focus:border-indigo-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer truncate"
+            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-8 py-2.5 text-sm font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all cursor-pointer truncate"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
@@ -111,7 +110,7 @@ export function ProductFilters({
             value={selectedSort}
             onChange={(e) => onSortChange(e.target.value)}
             aria-label="Sort products"
-            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-8 py-2.5 text-sm font-medium text-slate-700 shadow-2xs focus:border-indigo-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
+            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-8 py-2.5 text-sm font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer truncate"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>

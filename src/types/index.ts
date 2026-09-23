@@ -58,6 +58,22 @@ export interface Product {
   isLocalMock?: boolean;
 }
 
+export interface CreateProductInput {
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  brand?: string;
+  discountPercentage?: number;
+  thumbnail?: string;
+  images?: string[];
+}
+
+export interface UpdateProductInput extends Partial<CreateProductInput> {
+  id?: number;
+}
+
 export interface ProductsResponse {
   products: Product[];
   total: number;
