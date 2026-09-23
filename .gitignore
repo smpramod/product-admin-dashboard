@@ -33,7 +33,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# local assignment and tracking files (never pushed to GitHub)
-PROGRESS_LOG.md
-Frontend_Assignment.pdf
