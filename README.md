@@ -57,7 +57,7 @@ npm run start
 - [x] **Visual Error Feedback:** Shows explicit alert banners for invalid credentials or expired sessions.
 - [x] **1-Click Demo Login:** Quick-fill button to immediately populate test credentials.
 - [x] **Click Spam Prevention:** Disables submit buttons and renders a spinner to prevent duplicate concurrent authentication requests.
-- [x] **Route Guards:** Automatically redirects unauthenticated users to `/login?redirect=...` and forwards logged-in users directly to `/products`.
+- [x] **Route Guards:** Automatically redirects unauthenticated users to `/login` and forwards logged-in users directly to `/products`.
 - [x] **Dynamic Navbar:** Shows user avatar, full name, email, and one-click Logout that purges session tokens.
 
 ### 2. Product List & Responsive Layouts

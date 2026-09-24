@@ -20,7 +20,6 @@ import {
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get("redirect") || "/products";
   const sessionExpired = searchParams.get("expired") === "true";
 
   const { login, isAuthenticated, isLoading: authLoading, error, clearError } = useAuth();
@@ -34,9 +33,9 @@ function LoginFormContent() {
   // If already authenticated, redirect to products dashboard
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      router.replace(redirectPath);
+      router.replace("/products");
     }
-  }, [isAuthenticated, authLoading, router, redirectPath]);
+  }, [isAuthenticated, authLoading, router]);
 
   // Handle demo credential quick fill
   const handleFillDemoCredentials = () => {

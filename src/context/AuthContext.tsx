@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
       authService.clearAuthSession();
       if (pathname !== "/login") {
-        router.push("/login?expired=true");
+        router.push("/login");
       }
     };
 

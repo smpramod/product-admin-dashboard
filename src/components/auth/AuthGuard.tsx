@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
@@ -12,15 +12,12 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      // Save intended destination for redirect back after login
-      const redirectUrl = encodeURIComponent(pathname);
-      router.replace(`/login?redirect=${redirectUrl}`);
+      router.replace("/login");
     }
-  }, [isAuthenticated, isLoading, router, pathname]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
