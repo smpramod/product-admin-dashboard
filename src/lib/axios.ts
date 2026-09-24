@@ -1,14 +1,18 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-
-const BASE_URL = "https://dummyjson.com";
+import { 
+  API_BASE_URL, 
+  API_TIMEOUT, 
+  STORAGE_KEYS, 
+  CUSTOM_EVENTS 
+} from "@/constants";
 
 // Centralized Axios instance
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000, // 15 seconds timeout
+  timeout: API_TIMEOUT,
 });
 
 // Request Interceptor: Automatically attach Bearer token if present
@@ -16,7 +20,7 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Only access localStorage in browser environment
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -60,10 +64,10 @@ apiClient.interceptors.response.use(
           // Clear credentials if token expired
           const currentPath = window.location.pathname;
           if (currentPath !== "/login") {
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("auth_user");
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
             // Dispatch a custom event to notify auth context
-            window.dispatchEvent(new Event("auth:unauthorized"));
+            window.dispatchEvent(new Event(CUSTOM_EVENTS.AUTH_UNAUTHORIZED));
           }
         }
       } else if (status === 404) {

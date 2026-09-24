@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { useRouter, usePathname } from "next/navigation";
 import { User } from "@/types";
 import authService, { LoginCredentials } from "@/services/authService";
+import { CUSTOM_EVENTS } from "@/constants";
 
 interface AuthContextType {
   user: User | null;
@@ -55,9 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    window.addEventListener(CUSTOM_EVENTS.AUTH_UNAUTHORIZED, handleUnauthorized);
     return () => {
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+      window.removeEventListener(CUSTOM_EVENTS.AUTH_UNAUTHORIZED, handleUnauthorized);
     };
   }, [pathname, router]);
 

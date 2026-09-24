@@ -1,5 +1,6 @@
 import apiClient from "@/lib/axios";
 import { CategoryItem } from "@/types";
+import { API_BASE_URL, API_ENDPOINTS } from "@/constants";
 
 export const categoryService = {
   /**
@@ -7,7 +8,7 @@ export const categoryService = {
    * Normalizes response to CategoryItem[] whether API returns string array or object array.
    */
   async getCategories(): Promise<CategoryItem[]> {
-    const response = await apiClient.get<unknown[]>("/products/categories");
+    const response = await apiClient.get<unknown[]>(API_ENDPOINTS.PRODUCTS_CATEGORIES);
     const data = response.data;
 
     if (!Array.isArray(data)) {
@@ -23,7 +24,7 @@ export const categoryService = {
         return {
           slug: item,
           name: formattedName,
-          url: `https://dummyjson.com/products/category/${item}`,
+          url: `${API_BASE_URL}/products/category/${item}`,
         };
       } else if (typeof item === "object" && item !== null) {
         const obj = item as Record<string, unknown>;
@@ -46,7 +47,7 @@ export const categoryService = {
    */
   async getCategoryList(): Promise<string[]> {
     try {
-      const response = await apiClient.get<string[]>("/products/category-list");
+      const response = await apiClient.get<string[]>(API_ENDPOINTS.PRODUCTS_CATEGORY_LIST);
       return Array.isArray(response.data) ? response.data : [];
     } catch {
       // Fallback: extract slugs from getCategories

@@ -10,22 +10,9 @@ import {
   Tag
 } from "lucide-react";
 import { CategoryItem } from "@/types";
+import { SORT_OPTIONS, type SortOption } from "@/constants";
 
-export interface SortOption {
-  label: string;
-  sortBy?: string;
-  order?: "asc" | "desc";
-  value: string;
-}
-
-export const SORT_OPTIONS: SortOption[] = [
-  { label: "Default (Featured)", value: "default" },
-  { label: "Price: Low to High", sortBy: "price", order: "asc", value: "price-asc" },
-  { label: "Price: High to Low", sortBy: "price", order: "desc", value: "price-desc" },
-  { label: "Rating: Highest First", sortBy: "rating", order: "desc", value: "rating-desc" },
-  { label: "Title: A to Z", sortBy: "title", order: "asc", value: "title-asc" },
-  { label: "Title: Z to A", sortBy: "title", order: "desc", value: "title-desc" },
-];
+export { SORT_OPTIONS, type SortOption };
 
 interface ProductFiltersProps {
   searchTerm: string;

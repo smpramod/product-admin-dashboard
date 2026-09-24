@@ -1,5 +1,6 @@
 import apiClient from "@/lib/axios";
 import { User } from "@/types";
+import { API_ENDPOINTS, STORAGE_KEYS } from "@/constants";
 
 export interface LoginCredentials {
   username: string;
@@ -11,15 +12,12 @@ export interface AuthResponse extends User {
   accessToken?: string;
 }
 
-const TOKEN_KEY = "auth_token";
-const USER_KEY = "auth_user";
-
 export const authService = {
   /**
    * Authenticate user with DummyJSON auth endpoint
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>("/auth/login", {
+    const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH_LOGIN, {
       username: credentials.username,
       password: credentials.password,
       expiresInMins: credentials.expiresInMins || 60,
@@ -30,8 +28,8 @@ export const authService = {
     const token = data.token || data.accessToken || "";
     
     if (token && typeof window !== "undefined") {
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(data));
     }
 
     return data;
@@ -41,7 +39,7 @@ export const authService = {
    * Get current authenticated user profile
    */
   async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<User>("/auth/me");
+    const response = await apiClient.get<User>(API_ENDPOINTS.AUTH_ME);
     return response.data;
   },
 
@@ -49,7 +47,7 @@ export const authService = {
    * Refresh auth token
    */
   async refreshToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
-    const response = await apiClient.post("/auth/refresh", {
+    const response = await apiClient.post(API_ENDPOINTS.AUTH_REFRESH, {
       refreshToken,
       expiresInMins: 60,
     });
@@ -62,7 +60,7 @@ export const authService = {
   getStoredUser(): User | null {
     if (typeof window === "undefined") return null;
     try {
-      const user = localStorage.getItem(USER_KEY);
+      const user = localStorage.getItem(STORAGE_KEYS.AUTH_USER);
       return user ? JSON.parse(user) : null;
     } catch {
       return null;
@@ -74,7 +72,7 @@ export const authService = {
    */
   getStoredToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   },
 
   /**
@@ -82,8 +80,8 @@ export const authService = {
    */
   clearAuthSession(): void {
     if (typeof window !== "undefined") {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     }
   },
 };

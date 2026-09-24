@@ -1,8 +1,5 @@
 import { Product, CreateProductInput, UpdateProductInput } from "@/types";
-
-const ADDED_KEY = "mock_added_products";
-const EDITED_KEY = "mock_edited_products";
-const DELETED_KEY = "mock_deleted_product_ids";
+import { STORAGE_KEYS, DEFAULT_PRODUCT_THUMBNAIL } from "@/constants";
 
 export const mockStore = {
   /**
@@ -11,7 +8,7 @@ export const mockStore = {
   getAddedProducts(): Product[] {
     if (typeof window === "undefined") return [];
     try {
-      const data = localStorage.getItem(ADDED_KEY);
+      const data = localStorage.getItem(STORAGE_KEYS.MOCK_ADDED);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -35,10 +32,10 @@ export const mockStore = {
       brand: input.brand || "Custom Brand",
       discountPercentage: input.discountPercentage ? Number(input.discountPercentage) : 0,
       rating: 5.0, // Default 5.0 for newly added products
-      thumbnail: input.thumbnail || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60",
+      thumbnail: input.thumbnail || DEFAULT_PRODUCT_THUMBNAIL,
       images: input.images?.length
         ? input.images
-        : [input.thumbnail || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=60"],
+        : [input.thumbnail || DEFAULT_PRODUCT_THUMBNAIL],
       isLocalMock: true,
       reviews: [
         {
@@ -53,7 +50,7 @@ export const mockStore = {
 
     const updated = [newProduct, ...existing];
     if (typeof window !== "undefined") {
-      localStorage.setItem(ADDED_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_KEYS.MOCK_ADDED, JSON.stringify(updated));
     }
     return newProduct;
   },
@@ -64,7 +61,7 @@ export const mockStore = {
   getEditedProducts(): Record<number, Partial<Product>> {
     if (typeof window === "undefined") return {};
     try {
-      const data = localStorage.getItem(EDITED_KEY);
+      const data = localStorage.getItem(STORAGE_KEYS.MOCK_EDITED);
       return data ? JSON.parse(data) : {};
     } catch {
       return {};
@@ -85,7 +82,7 @@ export const mockStore = {
       const updatedAdded = addedList.map((p) =>
         p.id === id ? { ...p, ...updates, isLocalMock: true } : p
       );
-      localStorage.setItem(ADDED_KEY, JSON.stringify(updatedAdded));
+      localStorage.setItem(STORAGE_KEYS.MOCK_ADDED, JSON.stringify(updatedAdded));
       return;
     }
 
@@ -96,7 +93,7 @@ export const mockStore = {
       ...updates,
       isLocalMock: true,
     };
-    localStorage.setItem(EDITED_KEY, JSON.stringify(editedMap));
+    localStorage.setItem(STORAGE_KEYS.MOCK_EDITED, JSON.stringify(editedMap));
   },
 
   /**
@@ -105,7 +102,7 @@ export const mockStore = {
   getDeletedProductIds(): number[] {
     if (typeof window === "undefined") return [];
     try {
-      const data = localStorage.getItem(DELETED_KEY);
+      const data = localStorage.getItem(STORAGE_KEYS.MOCK_DELETED);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -121,13 +118,13 @@ export const mockStore = {
     // If it was in locally added list, remove from added list
     const addedList = this.getAddedProducts();
     const filteredAdded = addedList.filter((p) => p.id !== id);
-    localStorage.setItem(ADDED_KEY, JSON.stringify(filteredAdded));
+    localStorage.setItem(STORAGE_KEYS.MOCK_ADDED, JSON.stringify(filteredAdded));
 
     // Also track in deleted IDs list
     const deletedList = this.getDeletedProductIds();
     if (!deletedList.includes(id)) {
       deletedList.push(id);
-      localStorage.setItem(DELETED_KEY, JSON.stringify(deletedList));
+      localStorage.setItem(STORAGE_KEYS.MOCK_DELETED, JSON.stringify(deletedList));
     }
   },
 

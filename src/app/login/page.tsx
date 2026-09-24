@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { DEMO_CREDENTIALS } from "@/constants";
 import { 
   Package, 
   Lock, 
@@ -39,8 +40,8 @@ function LoginFormContent() {
 
   // Handle demo credential quick fill
   const handleFillDemoCredentials = () => {
-    setUsername("emilys");
-    setPassword("emilyspass");
+    setUsername(DEMO_CREDENTIALS.USERNAME);
+    setPassword(DEMO_CREDENTIALS.PASSWORD);
     setFormError(null);
     clearError();
   };
@@ -101,8 +102,8 @@ function LoginFormContent() {
               <div className="space-y-1 text-xs">
                 <p className="font-semibold text-indigo-900">Demo Review Credentials</p>
                 <div className="text-indigo-700 space-y-0.5">
-                  <p>Username: <code className="font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded text-indigo-900 border border-indigo-100">emilys</code></p>
-                  <p>Password: <code className="font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded text-indigo-900 border border-indigo-100">emilyspass</code></p>
+                  <p>Username: <code className="font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded text-indigo-900 border border-indigo-100">{DEMO_CREDENTIALS.USERNAME}</code></p>
+                  <p>Password: <code className="font-mono font-bold bg-white/90 px-1.5 py-0.5 rounded text-indigo-900 border border-indigo-100">{DEMO_CREDENTIALS.PASSWORD}</code></p>
                 </div>
               </div>
             </div>

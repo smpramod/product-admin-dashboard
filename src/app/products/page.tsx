@@ -8,7 +8,7 @@ import { ProductTable } from "@/components/products/ProductTable";
 import { ProductCards } from "@/components/products/ProductCards";
 import { Pagination } from "@/components/products/Pagination";
 import { ProductTableSkeleton } from "@/components/products/ProductSkeleton";
-import { ProductFilters, SORT_OPTIONS } from "@/components/products/ProductFilters";
+import { ProductFilters } from "@/components/products/ProductFilters";
 import { ProductModal } from "@/components/products/ProductModal";
 import { DeleteConfirmModal } from "@/components/products/DeleteConfirmModal";
 import productService from "@/services/productService";
@@ -16,8 +16,15 @@ import categoryService from "@/services/categoryService";
 import mockStore from "@/lib/mockStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Product, CategoryItem, CreateProductInput } from "@/types";
+import {
+  DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  SEARCH_DEBOUNCE_MS,
+  TOAST_DURATION_MS,
+  SORT_OPTIONS,
+} from "@/constants";
 import { 
-  Package, 
   RefreshCw, 
   AlertCircle, 
   SearchX,
@@ -39,11 +46,13 @@ function ProductsDashboardContent() {
   const urlSortBy = searchParams.get("sortBy") || "";
   const urlOrder = (searchParams.get("order") as "asc" | "desc") || "asc";
 
-  const parsedPage = rawPage ? parseInt(rawPage, 10) : 1;
-  const currentPage = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const parsedPage = rawPage ? parseInt(rawPage, 10) : DEFAULT_PAGE;
+  const currentPage = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : DEFAULT_PAGE;
 
-  const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : 10;
-  const pageSize = [10, 20, 50].includes(parsedLimit) ? parsedLimit : 10;
+  const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : DEFAULT_PAGE_SIZE;
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(parsedLimit)
+    ? parsedLimit
+    : DEFAULT_PAGE_SIZE;
 
   const getSortDropdownValue = () => {
     if (!urlSortBy) return "default";
@@ -52,7 +61,7 @@ function ProductsDashboardContent() {
 
   // 2. State
   const [searchInput, setSearchInput] = useState(urlSearch);
-  const debouncedSearch = useDebounce(searchInput, 400);
+  const debouncedSearch = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -99,7 +108,7 @@ function ProductsDashboardContent() {
     if (debouncedSearch !== urlSearch) {
       updateUrlParams({
         search: debouncedSearch.trim() ? debouncedSearch.trim() : null,
-        page: 1,
+        page: DEFAULT_PAGE,
       });
     }
   }, [debouncedSearch, urlSearch, updateUrlParams]);
@@ -128,7 +137,7 @@ function ProductsDashboardContent() {
     setToastMessage(message);
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, TOAST_DURATION_MS);
   };
 
   // 7. Main Data Fetching with Local Mock Overlay
@@ -265,13 +274,13 @@ function ProductsDashboardContent() {
 
   // Filter and pagination handlers
   const handleSearchChange = (val: string) => setSearchInput(val);
-  const handleCategoryChange = (cat: string) => updateUrlParams({ category: cat || null, page: 1 });
+  const handleCategoryChange = (cat: string) => updateUrlParams({ category: cat || null, page: DEFAULT_PAGE });
   const handleSortChange = (sortValue: string) => {
     const selected = SORT_OPTIONS.find((s) => s.value === sortValue);
     if (!selected || selected.value === "default") {
-      updateUrlParams({ sortBy: null, order: null, page: 1 });
+      updateUrlParams({ sortBy: null, order: null, page: DEFAULT_PAGE });
     } else {
-      updateUrlParams({ sortBy: selected.sortBy || null, order: selected.order || null, page: 1 });
+      updateUrlParams({ sortBy: selected.sortBy || null, order: selected.order || null, page: DEFAULT_PAGE });
     }
   };
   const handleResetFilters = () => {
@@ -279,7 +288,7 @@ function ProductsDashboardContent() {
     router.push(pathname);
   };
   const handlePageChange = (newPage: number) => updateUrlParams({ page: newPage });
-  const handlePageSizeChange = (newSize: number) => updateUrlParams({ limit: newSize, page: 1 });
+  const handlePageSizeChange = (newSize: number) => updateUrlParams({ limit: newSize, page: DEFAULT_PAGE });
 
   const isFiltered = Boolean(urlSearch || urlCategory || (urlSortBy && getSortDropdownValue() !== "default"));
 
@@ -458,7 +467,7 @@ function ProductsDashboardContent() {
 export default function ProductsPage() {
   return (
     <AuthGuard>
-      <Suspense fallback={<ProductTableSkeleton rows={10} />}>
+      <Suspense fallback={<ProductTableSkeleton rows={DEFAULT_PAGE_SIZE} />}>
         <ProductsDashboardContent />
       </Suspense>
     </AuthGuard>

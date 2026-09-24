@@ -1,6 +1,7 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PAGE_SIZE_OPTIONS } from "@/constants";
 
 interface PaginationProps {
   currentPage: number;
@@ -8,7 +9,7 @@ interface PaginationProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-  pageSizeOptions?: number[];
+  pageSizeOptions?: readonly number[] | number[];
   disabled?: boolean;
 }
 
@@ -18,7 +19,7 @@ export function Pagination({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 20, 50],
+  pageSizeOptions = PAGE_SIZE_OPTIONS,
   disabled = false,
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -157,3 +158,5 @@ export function Pagination({
     </div>
   );
 }
+
+export default Pagination;

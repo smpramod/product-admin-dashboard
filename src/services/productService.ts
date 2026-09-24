@@ -1,5 +1,6 @@
 import apiClient from "@/lib/axios";
 import { Product, ProductsResponse } from "@/types";
+import { API_ENDPOINTS, DEFAULT_PAGE_SIZE } from "@/constants";
 
 export interface GetProductsParams {
   limit?: number;
@@ -39,7 +40,7 @@ export const productService = {
    * Fetch paginated list of products with optional sorting
    */
   async getProducts(params: GetProductsParams = {}): Promise<ProductsResponse> {
-    const { limit = 10, skip = 0, sortBy, order, delay } = params;
+    const { limit = DEFAULT_PAGE_SIZE, skip = 0, sortBy, order, delay } = params;
     const queryParams: Record<string, string | number> = {
       limit,
       skip,
@@ -49,7 +50,7 @@ export const productService = {
     if (order) queryParams.order = order;
     if (delay) queryParams.delay = delay;
 
-    const response = await apiClient.get<ProductsResponse>("/products", {
+    const response = await apiClient.get<ProductsResponse>(API_ENDPOINTS.PRODUCTS, {
       params: queryParams,
     });
     return response.data;
@@ -60,7 +61,7 @@ export const productService = {
    * for eliminating search race conditions
    */
   async searchProducts(params: SearchProductsParams): Promise<ProductsResponse> {
-    const { query, limit = 10, skip = 0, sortBy, order, delay, signal } = params;
+    const { query, limit = DEFAULT_PAGE_SIZE, skip = 0, sortBy, order, delay, signal } = params;
     const queryParams: Record<string, string | number> = {
       q: query,
       limit,
@@ -71,7 +72,7 @@ export const productService = {
     if (order) queryParams.order = order;
     if (delay) queryParams.delay = delay;
 
-    const response = await apiClient.get<ProductsResponse>("/products/search", {
+    const response = await apiClient.get<ProductsResponse>(API_ENDPOINTS.PRODUCTS_SEARCH, {
       params: queryParams,
       signal, // Cancel older in-flight requests if user types faster
     });
@@ -82,7 +83,7 @@ export const productService = {
    * Fetch products filtered by a specific category
    */
   async getProductsByCategory(params: CategoryProductsParams): Promise<ProductsResponse> {
-    const { category, limit = 10, skip = 0, sortBy, order, delay } = params;
+    const { category, limit = DEFAULT_PAGE_SIZE, skip = 0, sortBy, order, delay } = params;
     const queryParams: Record<string, string | number> = {
       limit,
       skip,
@@ -93,9 +94,12 @@ export const productService = {
     if (delay) queryParams.delay = delay;
 
     const encodedCategory = encodeURIComponent(category);
-    const response = await apiClient.get<ProductsResponse>(`/products/category/${encodedCategory}`, {
-      params: queryParams,
-    });
+    const response = await apiClient.get<ProductsResponse>(
+      `${API_ENDPOINTS.PRODUCTS_BY_CATEGORY}/${encodedCategory}`,
+      {
+        params: queryParams,
+      }
+    );
     return response.data;
   },
 
@@ -106,7 +110,7 @@ export const productService = {
     const queryParams: Record<string, number> = {};
     if (delay) queryParams.delay = delay;
 
-    const response = await apiClient.get<Product>(`/products/${id}`, {
+    const response = await apiClient.get<Product>(`${API_ENDPOINTS.PRODUCTS}/${id}`, {
       params: queryParams,
     });
     return response.data;
@@ -116,7 +120,7 @@ export const productService = {
    * Add a new product (DummyJSON POST /products/add)
    */
   async addProduct(product: CreateProductInput): Promise<Product> {
-    const response = await apiClient.post<Product>("/products/add", product);
+    const response = await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS_ADD, product);
     return response.data;
   },
 
@@ -124,7 +128,7 @@ export const productService = {
    * Update an existing product (DummyJSON PUT /products/{id})
    */
   async updateProduct(id: number, product: UpdateProductInput): Promise<Product> {
-    const response = await apiClient.put<Product>(`/products/${id}`, product);
+    const response = await apiClient.put<Product>(`${API_ENDPOINTS.PRODUCTS}/${id}`, product);
     return response.data;
   },
 
@@ -132,7 +136,7 @@ export const productService = {
    * Delete a product (DummyJSON DELETE /products/{id})
    */
   async deleteProduct(id: number): Promise<{ id: number; isDeleted: boolean; deletedOn: string }> {
-    const response = await apiClient.delete(`/products/${id}`);
+    const response = await apiClient.delete(`${API_ENDPOINTS.PRODUCTS}/${id}`);
     return response.data;
   },
 };
