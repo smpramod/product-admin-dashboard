@@ -11,7 +11,7 @@
 ---
 
 ## 🌐 Live Demo & Deployment
-- **Live Demo Link:** [Deploy on Vercel / Netlify](https://github.com/smpramod/product-admin-dashboard)
+- **Live Demo Link:** [Deploy on Vercel / Netlify]([https://github.com/smpramod/product-admin-dashboard](https://product-admin-dashboard-kohl-three.vercel.app/login))
 - **Demo Review Credentials:**
   - **Username:** `emilys`
   - **Password:** `emilyspass`
